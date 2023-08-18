@@ -18,6 +18,10 @@ export default class AppRoot extends WebComponent {
     this.helloNode?.removeEventListener('click', this.#onHelloClick);
   }
 
+  disconnected() {
+    this.removeEventListeners();
+  }
+
   render() {
     this.removeEventListeners();
     this.fragment.innerHTML = `
@@ -26,10 +30,6 @@ export default class AppRoot extends WebComponent {
       </div>
     `;
     this.addEventListeners();
-  }
-
-  clear() {
-    this.removeEventListeners();
   }
 }
 
