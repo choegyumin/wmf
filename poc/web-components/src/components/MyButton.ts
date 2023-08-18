@@ -1,24 +1,6 @@
-export default class MyButton extends HTMLElement {
-  constructor() {
-    super();
+import { WebComponent } from '../core/index.js';
 
-    const internals = this.attachInternals();
-    if (!internals.shadowRoot) {
-      // If we don't have SSR content, build the shadow root
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  get fragment() {
-    return this.shadowRoot!;
-  }
-
-  connectedCallback() {
-    /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
-    if (!this.isConnected) return;
-    this.render();
-  }
-
+export default class MyButton extends WebComponent {
   render() {
     this.fragment.innerHTML = `
       <button>

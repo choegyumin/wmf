@@ -1,20 +1,7 @@
 import './MyButton.js';
+import { WebComponent } from '../core/index.js';
 
-export default class AppRoot extends HTMLElement {
-  constructor() {
-    super();
-
-    const internals = this.attachInternals();
-    if (!internals.shadowRoot) {
-      // If we don't have SSR content, build the shadow root
-      this.attachShadow({ mode: 'open' });
-    }
-  }
-
-  get fragment() {
-    return this.shadowRoot!;
-  }
-
+export default class AppRoot extends WebComponent {
   get helloNode() {
     return this.fragment.querySelector<HTMLElement>(':host [part="hello"]');
   }
@@ -29,16 +16,6 @@ export default class AppRoot extends HTMLElement {
 
   removeEventListeners() {
     this.helloNode?.removeEventListener('click', this.#onHelloClick);
-  }
-
-  connectedCallback() {
-    /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
-    if (!this.isConnected) return;
-    this.render();
-  }
-
-  disconnectedCallback() {
-    this.clear();
   }
 
   render() {
