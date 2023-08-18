@@ -1,1 +1,1 @@
-console.log('Hello, World!');
+import './components/AppRoot.js';
