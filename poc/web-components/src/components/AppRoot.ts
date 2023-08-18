@@ -1,8 +1,22 @@
 import './MyButton.js';
 
 export default class AppRoot extends HTMLElement {
+  constructor() {
+    super();
+
+    const internals = this.attachInternals();
+    if (!internals.shadowRoot) {
+      // If we don't have SSR content, build the shadow root
+      this.attachShadow({ mode: 'open' });
+    }
+  }
+
+  get fragment() {
+    return this.shadowRoot!;
+  }
+
   get helloNode() {
-    return this.querySelector<HTMLElement>('[part="hello"]');
+    return this.fragment.querySelector<HTMLElement>(':host [part="hello"]');
   }
 
   #onHelloClick = () => {
@@ -29,7 +43,7 @@ export default class AppRoot extends HTMLElement {
 
   render() {
     this.removeEventListeners();
-    this.innerHTML = `
+    this.fragment.innerHTML = `
       <div>
         <my-button part="hello">Hello</my-button>, World!
       </div>
