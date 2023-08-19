@@ -1,4 +1,5 @@
 import './MyButton.js';
+import './MyCounter.js';
 import { WebComponent } from '../core/index.js';
 
 export default class AppRoot extends WebComponent {
@@ -27,6 +28,9 @@ export default class AppRoot extends WebComponent {
     this.fragment.innerHTML = `
       <div>
         <my-button part="hello">Hello</my-button>, World!
+        <hr>
+        <h2>State</h2>
+        <my-counter></my-counter>
       </div>
     `;
     this.addEventListeners();
