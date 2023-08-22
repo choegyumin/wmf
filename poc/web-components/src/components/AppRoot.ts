@@ -2,6 +2,7 @@ import './MyButton.js';
 import './MyCounter.js';
 import './MyList.js';
 import { WebComponent } from '../core/index.js';
+import { updateChildNodes } from '../utils/index.js';
 
 export default class AppRoot extends WebComponent {
   state = this.defineState({
@@ -44,7 +45,7 @@ export default class AppRoot extends WebComponent {
 
   render() {
     this.removeEventListeners();
-    this.fragment.innerHTML = `
+    const html = `
       <div>
         <my-button part="hello">Hello</my-button>, World!
         <hr>
@@ -56,6 +57,8 @@ export default class AppRoot extends WebComponent {
         <my-list list='${JSON.stringify(this.state.list)}'></my-list>
       </div>
     `;
+    if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
+    else updateChildNodes(this.fragment, html);
     this.addEventListeners();
   }
 }

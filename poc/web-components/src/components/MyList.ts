@@ -1,4 +1,5 @@
 import { P, WebComponent } from '../core/index.js';
+import { updateChildNodes } from '../utils/index.js';
 
 export default class MyList extends WebComponent {
   static propertiesType = {
@@ -24,14 +25,16 @@ export default class MyList extends WebComponent {
   }
 
   render() {
-    this.fragment.innerHTML = `
+    const html = `
       <ul>
         ${this.properties.list
-          .map((item) => `<li><input type="text" placeholder="${item}" /></li>`)
+          .map((item) => `<li key="${item}"><input type="text" placeholder="${item}" /></li>`)
           .reverse()
           .join('')}
       </ul>
     `;
+    if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
+    else updateChildNodes(this.fragment, html);
   }
 }
 
