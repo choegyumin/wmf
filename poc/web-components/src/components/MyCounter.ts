@@ -1,18 +1,16 @@
 import { WebComponent } from '../core/index.js';
 
 export default class MyCounter extends WebComponent {
-  state = {
+  state = this.defineState({
     count: 0,
-  };
+  });
 
   get upNode() {
     return this.fragment.querySelector<HTMLElement>(':host [part="up"]');
   }
 
   #onUpClick = () => {
-    if (this.upNode == null) return;
     this.state.count += 1;
-    this.upNode.innerHTML = `${this.state.count}`;
   };
 
   addEventListeners() {
@@ -25,6 +23,11 @@ export default class MyCounter extends WebComponent {
 
   disconnected() {
     this.removeEventListeners();
+  }
+
+  stateChanged(name: string, oldValue: unknown, newValue: unknown) {
+    console.log(this.tagName, 'stateChanged', { name, oldValue, newValue });
+    this.render();
   }
 
   render() {

@@ -1,5 +1,8 @@
+import type { State } from './types.js';
+
 export default abstract class WebComponent extends HTMLElement {
   #initialized: boolean = false;
+  state: State = {};
 
   constructor() {
     super();
@@ -38,6 +41,17 @@ export default abstract class WebComponent extends HTMLElement {
     });
   }
 
+  defineState<S extends typeof this.state>(state: S): S {
+    return new Proxy(state, {
+      set: (target, prop, newValue, receiver) => {
+        const oldValue = target[prop as keyof S];
+        const result = Reflect.set(target, prop, newValue, receiver);
+        this.stateChangedCallback(prop as string, oldValue, newValue);
+        return result;
+      },
+    });
+  }
+
   /** @deprecated This is an internal implementation. Use `connected` instead. */
   connectedCallback(): void {
     /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
@@ -64,10 +78,18 @@ export default abstract class WebComponent extends HTMLElement {
     this.attributeChanged(name, oldValue, newValue);
   }
 
+  /** @deprecated This is an internal implementation. Use `stateChanged` instead. */
+  stateChangedCallback(name: string, oldValue: unknown, newValue: unknown): void {
+    if (oldValue === newValue) return;
+    if (!this.isInitialized) return;
+    this.stateChanged(name, oldValue, newValue);
+  }
+
   render(): void {}
 
   connected(): void {}
   disconnected(): void {}
   adopted(): void {}
   attributeChanged(name: string, oldValue: string | null, newValue: string | null): void {}
+  stateChanged(name: string, oldValue: unknown, newValue: unknown): void {}
 }
