@@ -26,7 +26,10 @@ export default class MyList extends WebComponent {
   render() {
     this.fragment.innerHTML = `
       <ul>
-        ${this.properties.list.map((item) => `<li>${String(item)}</li>`).join('')}
+        ${this.properties.list
+          .map((item) => `<li><input type="text" placeholder="${item}" /></li>`)
+          .reverse()
+          .join('')}
       </ul>
     `;
   }

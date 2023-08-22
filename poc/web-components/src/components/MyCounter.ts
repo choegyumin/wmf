@@ -34,7 +34,9 @@ export default class MyCounter extends WebComponent {
     this.removeEventListeners();
     this.fragment.innerHTML = `
       <button part="up">
-        ${this.state.count}
+        <strong>
+          ${this.state.count}
+        </strong>
       </button>
     `;
     this.addEventListeners();
