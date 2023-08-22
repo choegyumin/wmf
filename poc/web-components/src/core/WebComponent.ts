@@ -1,3 +1,4 @@
+import { attributeToProperty, propertyToAttribute } from './PropertyConverter.js';
 import type { Properties, PropertiesType, State } from './types.js';
 
 const propertyGetter: (...args: Parameters<typeof Reflect.get>) => unknown = Reflect.get;
@@ -17,6 +18,18 @@ export default abstract class WebComponent extends HTMLElement {
       // If we don't have SSR content, build the shadow root
       this.attachShadow({ mode: 'open' });
     }
+
+    // Reflection (Type inference is not supported)
+    Object.keys(this.#propertiesType).forEach((name) => {
+      Object.defineProperty(this, name, {
+        get() {
+          return this.getAttribute(name);
+        },
+        set(value: unknown) {
+          this.setAttribute(name, value);
+        },
+      });
+    });
   }
 
   /** @deprecated This is an internal implementation. Use `propertiesType` instead. */
@@ -43,6 +56,28 @@ export default abstract class WebComponent extends HTMLElement {
     return this.#initialized;
   }
 
+  #changeProprety(name: string, value: unknown = propertyGetter(this.#defaultProperties, name)) {
+    const oldValue = propertyGetter(this.properties, name);
+    propertySetter(this.properties, name, value);
+    this.propertyChangedCallback(name, oldValue, value);
+  }
+
+  /** @see {@link https://web.dev/custom-elements-v1/#reflectattr} */
+  #reflectToAttribute(name: string, property: unknown): void {
+    const converter = this.#propertiesType[name]?.to;
+    const attribute = propertyToAttribute(property, converter);
+    // Call `attributeChangedCallback`
+    if (attribute == null) this.removeAttribute(name);
+    else this.setAttribute(name, attribute);
+  }
+
+  /** @see {@link https://web.dev/custom-elements-v1/#reflectattr} */
+  #reflectToProperty(name: string, attribute: string | null): void {
+    const converter = this.#propertiesType[name]?.from;
+    const property = attributeToProperty(attribute, converter);
+    this.#changeProprety(name, property);
+  }
+
   #initialize(): void {
     this.#defaultProperties = { ...this.properties };
     /**
@@ -55,12 +90,16 @@ export default abstract class WebComponent extends HTMLElement {
     });
   }
 
-  #setProperty(name: string, value: unknown): void {
-    if (!Object.hasOwn(this.#propertiesType, name)) return;
-    const defaultValue = propertyGetter(this.#defaultProperties, name);
-    const oldValue = propertyGetter(this.properties, name);
-    propertySetter(this.properties, name, value ?? defaultValue);
-    this.propertyChangedCallback(name, oldValue, value);
+  getProperty(name: string): unknown {
+    return propertyGetter(this.properties, name);
+  }
+
+  setProperty(name: string, value: unknown): void {
+    if (Object.hasOwn(this.#propertiesType, name)) this.#reflectToAttribute(name, value);
+  }
+
+  hasProperty(name: string): boolean {
+    return Object.hasOwn(this.#propertiesType, name) && propertyGetter(this.properties, name) !== undefined;
   }
 
   defineState<S extends typeof this.state>(state: S): S {
@@ -96,23 +135,14 @@ export default abstract class WebComponent extends HTMLElement {
   /** @deprecated This is an internal implementation. Use `propertyChanged` instead. */
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
-    this.#setProperty(
-      name,
-      (() => {
-        const converter = this.#propertiesType[name]?.from;
-        if (typeof converter === 'function') return converter(newValue);
-        if (newValue == null) return null;
-        return String(newValue);
-      })(),
-    );
+    this.#reflectToProperty(name, newValue);
   }
 
   /** @deprecated This is an internal implementation. Use `propertyChanged` instead. */
   propertyChangedCallback(name: string, oldValue: unknown, newValue: unknown): void {
     if (oldValue === newValue) return;
     if (!this.isInitialized) return;
-    const defaultValue = propertyGetter(this.#defaultProperties, name);
-    this.propertyChanged(name, oldValue, newValue ?? defaultValue);
+    this.propertyChanged(name, oldValue, newValue);
   }
 
   /** @deprecated This is an internal implementation. Use `stateChanged` instead. */

@@ -1,5 +1,19 @@
 import type { FromAttribute, ToAttribute } from './types';
 
+export const attributeToProperty = <T = unknown>(
+  value: string | null,
+  converter: FromAttribute<T>,
+): T | string | null => {
+  if (typeof converter === 'function') return converter(value);
+  return value;
+};
+
+export const propertyToAttribute = <T = unknown>(value: T, converter: ToAttribute<T>): string | null => {
+  if (typeof converter === 'function') return converter(value);
+  if (value == null) return null;
+  return String(value);
+};
+
 const define = <T>(from: FromAttribute<T>, to: ToAttribute<T>) => ({ from, to });
 
 const PropertyConverter = {
