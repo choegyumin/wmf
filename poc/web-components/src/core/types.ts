@@ -13,3 +13,11 @@ export type FromAttribute<T = unknown> = (attribute: string | null) => T | null;
 export type ToAttribute<T = unknown> = (property: T | null) => string | null;
 
 export type State<S extends Partial<Record<string, unknown>> = {}> = S;
+
+/** @see HTMLElement.addEventListener */
+export type EventListenerConfig = {
+  targets: Node[];
+  type: string;
+  listener: EventListener;
+  options?: AddEventListenerOptions;
+};

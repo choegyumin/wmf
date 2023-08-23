@@ -1,5 +1,5 @@
 import { attributeToProperty, propertyToAttribute } from './PropertyConverter.js';
-import type { Properties, PropertiesType, State } from './types.js';
+import type { EventListenerConfig, Properties, PropertiesType, State } from './types.js';
 import { updateChildNodes } from '../utils/index.js';
 
 const propertyGetter: (...args: Parameters<typeof Reflect.get>) => unknown = Reflect.get;
@@ -10,6 +10,7 @@ export default abstract class WebComponent extends HTMLElement {
   #defaultProperties: Properties<{}> = {};
   properties: Properties<{}> = {};
   state: State = {};
+  #events: EventListenerConfig[] = [];
   #updaterID: number = -1;
 
   constructor() {
@@ -92,11 +93,19 @@ export default abstract class WebComponent extends HTMLElement {
     });
   }
 
+  #invalidate(): void {
+    this.#events.forEach(({ targets, type, listener, options }) => {
+      targets.forEach((target) => target.removeEventListener(type, listener, options));
+    });
+    this.#events = [];
+  }
+
   #update(): void {
     cancelAnimationFrame(this.#updaterID);
     this.#updaterID = requestAnimationFrame(() => {
       if (!this.isInitialized) this.#initialize();
       this.willUpdate();
+      this.#invalidate();
       const html = this.render();
       if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
       else updateChildNodes(this.fragment, html);
@@ -127,6 +136,29 @@ export default abstract class WebComponent extends HTMLElement {
     });
   }
 
+  setEventListener<K extends keyof HTMLElementEventMap>(
+    selector: string | HTMLElement | HTMLElement[] | NodeListOf<HTMLElement> | null,
+    type: K,
+    listener: (this: HTMLElement, event: HTMLElementEventMap[K]) => any,
+    options?: EventListenerConfig['options'],
+  ): void;
+  setEventListener(
+    selector: string | Node | Node[] | NodeList | null,
+    type: EventListenerConfig['type'],
+    listener: EventListenerConfig['listener'],
+    options?: EventListenerConfig['options'],
+  ): void {
+    const targets = (() => {
+      if (typeof selector === 'string') return [...this.fragment.querySelectorAll(`:host ${selector}`)];
+      if (selector instanceof NodeList) return [...selector];
+      if (selector instanceof Node) return [selector];
+      return selector ?? [];
+    })();
+    const listenerFn = listener.bind(this);
+    targets.forEach((target) => target.addEventListener(type, listenerFn, options));
+    this.#events.push({ targets, type, listener: listenerFn, options });
+  }
+
   /** @deprecated This is an internal implementation. Use `connected` instead. */
   connectedCallback(): void {
     /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
@@ -137,6 +169,7 @@ export default abstract class WebComponent extends HTMLElement {
 
   /** @deprecated This is an internal implementation. Use `disconnected` instead. */
   disconnectedCallback(): void {
+    this.#invalidate();
     this.disconnected();
   }
 
