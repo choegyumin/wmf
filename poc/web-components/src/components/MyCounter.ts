@@ -1,5 +1,4 @@
 import { WebComponent } from '../core/index.js';
-import { updateChildNodes } from '../utils/index.js';
 
 export default class MyCounter extends WebComponent {
   state = this.defineState({
@@ -22,27 +21,30 @@ export default class MyCounter extends WebComponent {
     this.upNode?.removeEventListener('click', this.#onUpClick);
   }
 
+  willUpdate() {
+    this.removeEventListeners();
+  }
+
+  updated() {
+    this.addEventListeners();
+  }
+
   disconnected() {
     this.removeEventListeners();
   }
 
   stateChanged(name: string, oldValue: unknown, newValue: unknown) {
     console.log(this.tagName, 'stateChanged', { name, oldValue, newValue });
-    this.render();
   }
 
   render() {
-    this.removeEventListeners();
-    const html = `
+    return `
       <button part="up">
         <strong>
           ${this.state.count}
         </strong>
       </button>
     `;
-    if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
-    else updateChildNodes(this.fragment, html);
-    this.addEventListeners();
   }
 }
 

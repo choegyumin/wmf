@@ -1,5 +1,6 @@
 import { attributeToProperty, propertyToAttribute } from './PropertyConverter.js';
 import type { Properties, PropertiesType, State } from './types.js';
+import { updateChildNodes } from '../utils/index.js';
 
 const propertyGetter: (...args: Parameters<typeof Reflect.get>) => unknown = Reflect.get;
 const propertySetter: (...args: Parameters<typeof Reflect.set>) => boolean = Reflect.set;
@@ -90,6 +91,15 @@ export default abstract class WebComponent extends HTMLElement {
     });
   }
 
+  #update(): void {
+    if (!this.isInitialized) this.#initialize();
+    this.willUpdate();
+    const html = this.render();
+    if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
+    else updateChildNodes(this.fragment, html);
+    this.updated();
+  }
+
   getProperty(name: string): unknown {
     return propertyGetter(this.properties, name);
   }
@@ -117,8 +127,7 @@ export default abstract class WebComponent extends HTMLElement {
   connectedCallback(): void {
     /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
     if (!this.isConnected) return;
-    if (!this.isInitialized) this.#initialize();
-    this.render();
+    this.#update();
     this.connected();
   }
 
@@ -143,6 +152,7 @@ export default abstract class WebComponent extends HTMLElement {
     if (oldValue === newValue) return;
     if (!this.isInitialized) return;
     this.propertyChanged(name, oldValue, newValue);
+    this.#update();
   }
 
   /** @deprecated This is an internal implementation. Use `stateChanged` instead. */
@@ -150,13 +160,18 @@ export default abstract class WebComponent extends HTMLElement {
     if (oldValue === newValue) return;
     if (!this.isInitialized) return;
     this.stateChanged(name, oldValue, newValue);
+    this.#update();
   }
 
-  render(): void {}
+  render(): string {
+    return '';
+  }
 
   connected(): void {}
   disconnected(): void {}
   adopted(): void {}
   propertyChanged(name: string, oldValue: unknown, newValue: unknown): void {}
   stateChanged(name: string, oldValue: unknown, newValue: unknown): void {}
+  willUpdate(): void {}
+  updated(): void {}
 }
