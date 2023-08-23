@@ -1,6 +1,7 @@
 import './MyButton.js';
 import './MyCounter.js';
 import './MyList.js';
+import './MyToggle.js';
 import { WebComponent } from '../core/index.js';
 
 export default class AppRoot extends WebComponent {
@@ -33,16 +34,19 @@ export default class AppRoot extends WebComponent {
 
   render() {
     return `
-    <div>
-      <my-button part="hello">Hello</my-button>, World!
-      <hr>
-      <h2>State</h2>
-      <my-counter></my-counter>
-      <hr>
-      <h2>Properties</h2>
-      <my-button part="add">+</my-button>
-      <my-button part="batchAdd">+++</my-button>
+      <div>
+        <my-button part="hello">Hello</my-button>, World!
+        <hr>
+        <h2>State</h2>
+        <my-counter></my-counter>
+        <hr>
+        <h2>Properties</h2>
+        <my-button part="add">+</my-button>
+        <my-button part="batchAdd">+++</my-button>
         <my-list list='${JSON.stringify(this.state.list)}'></my-list>
+        <hr>
+        <h2>Function(Hook) Component</h2>
+        <my-toggle>Toggle</my-toggle>
       </div>
     `;
   }
