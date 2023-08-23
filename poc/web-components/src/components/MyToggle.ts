@@ -1,25 +1,27 @@
-import { WebComponent } from '../core/index.js';
+import { createWebComponent, P } from '../core/index.js';
 
-export default function Component() {
+const propertiesType = {
+  color: P.string,
+};
+
+const MyToggle = createWebComponent(propertiesType, function (properties) {
+  const { color = 'black' } = properties;
+
   return `
     <style>
       :host [part="toggle"] {
-        color: black;
+        color: ${color};
       }
       :host [part="toggle"][aria-pressed="true"] {
         box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .2);
       }
     </style>
-    <button part="toggle" aria-pressed="true">
+    <button part="toggle">
       <slot></slot>
     </button>
   `;
-}
-
-class MyToggle extends WebComponent {
-  render() {
-    return Component();
-  }
-}
+});
 
 customElements.define('my-toggle', MyToggle);
+
+export default MyToggle;
