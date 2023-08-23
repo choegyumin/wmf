@@ -1,3 +1,5 @@
+import { HookComponent } from './createWebComponent';
+
 export type PropertyType<T = unknown> = {
   from: FromAttribute<T>;
   to: ToAttribute<T>;
@@ -21,3 +23,10 @@ export type EventListenerConfig = {
   listener: EventListener;
   options?: AddEventListenerOptions;
 };
+
+export type EffectCallback = (component: HookComponent) => void | (() => void);
+export type EffectDeps = unknown[];
+
+export type CleanupCallback = (component: HookComponent) => void;
+
+export type SetState<S> = (state: S | ((prevState: S) => S)) => void;

@@ -1,4 +1,4 @@
-import { createWebComponent, P } from '../core/index.js';
+import { createWebComponent, P, useEffect, useEventListener, useState } from '../core/index.js';
 
 const propertiesType = {
   color: P.string,
@@ -6,6 +6,29 @@ const propertiesType = {
 
 const MyToggle = createWebComponent(propertiesType, function (properties) {
   const { color = 'black' } = properties;
+
+  const [pressed, setPressed] = useState(false);
+
+  const onButtonClick = () => {
+    setPressed(!pressed);
+  };
+
+  useEffect(() => {
+    console.log(this.tagName, 'effect');
+    return () => console.log(this.tagName, 'cleanup');
+  });
+
+  useEffect(() => {
+    console.log(this.tagName, 'effect []');
+    return () => console.log(this.tagName, 'cleanup []');
+  }, []);
+
+  useEffect(() => {
+    console.log(this.tagName, 'effect [pressed]', { pressed });
+    return () => console.log(this.tagName, 'cleanup [pressed]', { pressed });
+  }, [pressed]);
+
+  useEventListener('[part="toggle"]', 'click', onButtonClick);
 
   return `
     <style>
@@ -16,7 +39,7 @@ const MyToggle = createWebComponent(propertiesType, function (properties) {
         box-shadow: inset 1px 1px 1px rgba(0, 0, 0, .2);
       }
     </style>
-    <button part="toggle">
+    <button part="toggle" aria-pressed="${pressed}">
       <slot></slot>
     </button>
   `;
