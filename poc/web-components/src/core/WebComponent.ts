@@ -10,6 +10,7 @@ export default abstract class WebComponent extends HTMLElement {
   #defaultProperties: Properties<{}> = {};
   properties: Properties<{}> = {};
   state: State = {};
+  #updaterID: number = -1;
 
   constructor() {
     super();
@@ -92,12 +93,15 @@ export default abstract class WebComponent extends HTMLElement {
   }
 
   #update(): void {
-    if (!this.isInitialized) this.#initialize();
-    this.willUpdate();
-    const html = this.render();
-    if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
-    else updateChildNodes(this.fragment, html);
-    this.updated();
+    cancelAnimationFrame(this.#updaterID);
+    this.#updaterID = requestAnimationFrame(() => {
+      if (!this.isInitialized) this.#initialize();
+      this.willUpdate();
+      const html = this.render();
+      if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
+      else updateChildNodes(this.fragment, html);
+      this.updated();
+    });
   }
 
   getProperty(name: string): unknown {
