@@ -1,128 +1,21 @@
-import { attributeToProperty, propertyToAttribute } from './PropertyConverter.js';
-import type { EventListenerConfig, Properties, PropertiesType, State } from './types.js';
-import { updateChildNodes } from '../utils/index.js';
+import CustomComponent from './CustomComponent.js';
+import type { EventListenerConfig, State } from './types.js';
 
-const propertyGetter: (...args: Parameters<typeof Reflect.get>) => unknown = Reflect.get;
-const propertySetter: (...args: Parameters<typeof Reflect.set>) => boolean = Reflect.set;
-
-export default abstract class WebComponent extends HTMLElement {
-  #initialized: boolean = false;
-  #defaultProperties: Properties<{}> = {};
-  properties: Properties<{}> = {};
+export default abstract class LifecycleComponent extends CustomComponent {
   state: State = {};
   #events: EventListenerConfig[] = [];
-  #updaterID: number = -1;
 
-  constructor() {
-    super();
-
-    const internals = this.attachInternals();
-    if (!internals.shadowRoot) {
-      // If we don't have SSR content, build the shadow root
-      this.attachShadow({ mode: 'open' });
-    }
-
-    // Reflection (Type inference is not supported)
-    Object.keys(this.#propertiesType).forEach((name) => {
-      Object.defineProperty(this, name, {
-        get() {
-          return this.getAttribute(name);
-        },
-        set(value: unknown) {
-          this.setAttribute(name, value);
-        },
-      });
-    });
-  }
-
-  /** @deprecated This is an internal implementation. Use `propertiesType` instead. */
-  static get observedAttributes(): readonly string[] {
-    return Object.keys(this.propertiesType);
-  }
-
-  static propertiesType: PropertiesType<any> = {};
-
-  get #propertiesType(): PropertiesType<unknown> {
-    /** @see {@link https://github.com/microsoft/TypeScript/issues/3841} */
-    return (this.constructor as typeof WebComponent).propertiesType;
-  }
-
-  get fragment(): ShadowRoot {
-    return this.shadowRoot!;
-  }
-
-  /**
-   * Indicates that the DOM node and Component instance are in a usable state. (after construction and first Shadow DOM render)
-   * @see isConnected - Indicates whether the DOM node is connected to a Document object.
-   */
-  get isInitialized(): boolean {
-    return this.#initialized;
-  }
-
-  #changeProprety(name: string, value: unknown = propertyGetter(this.#defaultProperties, name)) {
-    const oldValue = propertyGetter(this.properties, name);
-    propertySetter(this.properties, name, value);
-    this.propertyChangedCallback(name, oldValue, value);
-  }
-
-  /** @see {@link https://web.dev/custom-elements-v1/#reflectattr} */
-  #reflectToAttribute(name: string, property: unknown): void {
-    const converter = this.#propertiesType[name]?.to;
-    const attribute = propertyToAttribute(property, converter);
-    // Call `attributeChangedCallback`
-    if (attribute == null) this.removeAttribute(name);
-    else this.setAttribute(name, attribute);
-  }
-
-  /** @see {@link https://web.dev/custom-elements-v1/#reflectattr} */
-  #reflectToProperty(name: string, attribute: string | null): void {
-    const converter = this.#propertiesType[name]?.from;
-    const property = attributeToProperty(attribute, converter);
-    this.#changeProprety(name, property);
-  }
-
-  #initialize(): void {
-    this.#defaultProperties = { ...this.properties };
-    /**
-     * Lifecycle callbacks may be called before `connectedCallback`.
-     * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks}
-     * @see {@link https://mdn.github.io/web-components-examples/life-cycle-callbacks/}
-     */
-    queueMicrotask(() => {
-      this.#initialized = true;
-    });
-  }
-
-  #invalidate(): void {
+  #invalidateEvents(): void {
     this.#events.forEach(({ targets, type, listener, options }) => {
       targets.forEach((target) => target.removeEventListener(type, listener, options));
     });
     this.#events = [];
   }
 
-  #update(): void {
-    cancelAnimationFrame(this.#updaterID);
-    this.#updaterID = requestAnimationFrame(() => {
-      if (!this.isInitialized) this.#initialize();
-      this.willUpdate();
-      this.#invalidate();
-      const html = this.render();
-      if (this.fragment.innerHTML.trim() === '') this.fragment.innerHTML = html;
-      else updateChildNodes(this.fragment, html);
-      this.updated();
-    });
-  }
-
-  getProperty(name: string): unknown {
-    return propertyGetter(this.properties, name);
-  }
-
-  setProperty(name: string, value: unknown): void {
-    if (Object.hasOwn(this.#propertiesType, name)) this.#reflectToAttribute(name, value);
-  }
-
-  hasProperty(name: string): boolean {
-    return Object.hasOwn(this.#propertiesType, name) && propertyGetter(this.properties, name) !== undefined;
+  /** Force an update immediately. This may cause unexpected behavior. */
+  performUpdate(): void {
+    this.#invalidateEvents();
+    super.performUpdate();
   }
 
   defineState<S extends typeof this.state>(state: S): S {
@@ -159,37 +52,10 @@ export default abstract class WebComponent extends HTMLElement {
     this.#events.push({ targets, type, listener: listenerFn, options });
   }
 
-  /** @deprecated This is an internal implementation. Use `connected` instead. */
-  connectedCallback(): void {
-    /** @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements#using_the_lifecycle_callbacks} */
-    if (!this.isConnected) return;
-    this.#update();
-    this.connected();
-  }
-
   /** @deprecated This is an internal implementation. Use `disconnected` instead. */
   disconnectedCallback(): void {
-    this.#invalidate();
-    this.disconnected();
-  }
-
-  /** @deprecated This is an internal implementation. Use `adopted` instead. */
-  adoptedCallback(): void {
-    this.adopted();
-  }
-
-  /** @deprecated This is an internal implementation. Use `propertyChanged` instead. */
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
-    if (oldValue === newValue) return;
-    this.#reflectToProperty(name, newValue);
-  }
-
-  /** @deprecated This is an internal implementation. Use `propertyChanged` instead. */
-  propertyChangedCallback(name: string, oldValue: unknown, newValue: unknown): void {
-    if (oldValue === newValue) return;
-    if (!this.isInitialized) return;
-    this.propertyChanged(name, oldValue, newValue);
-    this.#update();
+    this.#invalidateEvents();
+    super.disconnectedCallback();
   }
 
   /** @deprecated This is an internal implementation. Use `stateChanged` instead. */
@@ -197,18 +63,8 @@ export default abstract class WebComponent extends HTMLElement {
     if (oldValue === newValue) return;
     if (!this.isInitialized) return;
     this.stateChanged(name, oldValue, newValue);
-    this.#update();
+    this.update();
   }
 
-  render(): string {
-    return '';
-  }
-
-  connected(): void {}
-  disconnected(): void {}
-  adopted(): void {}
-  propertyChanged(name: string, oldValue: unknown, newValue: unknown): void {}
   stateChanged(name: string, oldValue: unknown, newValue: unknown): void {}
-  willUpdate(): void {}
-  updated(): void {}
 }

@@ -1,14 +1,16 @@
+import CustomComponent from './CustomComponent.js';
 import type { Properties, PropertiesType } from './types.js';
-import WebComponent from './WebComponent.js';
 
 export type WebComponentFunction<P extends {}> = {
-  (this: WebComponent, properties: P): string;
+  (this: HookComponent, properties: P): string;
   displayName?: string;
 };
 
 export interface CreateWebComponentOptions {
   componentName?: string;
 }
+
+export abstract class HookComponent extends CustomComponent {}
 
 export default function createWebComponent<T extends PropertiesType<any>, P extends {} = Properties<T>>(
   propertiesType: T,
@@ -17,13 +19,13 @@ export default function createWebComponent<T extends PropertiesType<any>, P exte
 ) {
   const { componentName = component.displayName || component.name } = options;
 
-  const Constructor = class extends WebComponent {
+  const Constructor = class extends HookComponent {
     static propertiesType = propertiesType;
 
     properties = {} as P;
 
     render() {
-      return component.call(this as WebComponent, this.properties);
+      return component.call(this as HookComponent, this.properties);
     }
   };
 
