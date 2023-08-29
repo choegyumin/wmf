@@ -1,8 +1,15 @@
+import './BarPage.js';
+import './FooPage.js';
 import './MyButton.js';
 import './MyCounter.js';
 import './MyList.js';
 import './MyToggle.js';
-import { WebComponent } from '../core/index.js';
+import { createRouter, navigate, WebComponent } from '../core/index.js';
+
+const AppRouter = createRouter([
+  { path: '/', html: `<foo-page>` },
+  { path: '/bar', html: `<bar-page>` },
+]);
 
 export default class AppRoot extends WebComponent {
   state = this.defineState({
@@ -11,6 +18,14 @@ export default class AppRoot extends WebComponent {
 
   #onHelloClick() {
     alert('Hi');
+  }
+
+  #onFooClick() {
+    navigate('/', true);
+  }
+
+  #onBarClick() {
+    navigate('/bar', true);
   }
 
   #onAddClick() {
@@ -28,6 +43,8 @@ export default class AppRoot extends WebComponent {
 
   updated() {
     this.setEventListener('[part="hello"]', 'click', this.#onHelloClick);
+    this.setEventListener('[part="foo"]', 'click', this.#onFooClick);
+    this.setEventListener('[part="bar"]', 'click', this.#onBarClick);
     this.setEventListener('[part="add"]', 'click', this.#onAddClick);
     this.setEventListener('[part="batchAdd"]', 'click', this.#onBatchAddClick);
   }
@@ -36,6 +53,11 @@ export default class AppRoot extends WebComponent {
     return `
       <div>
         <my-button part="hello">Hello</my-button>, World!
+        <hr>
+        <h2>Router</h2>
+        <my-button part="foo">Foo</my-button>
+        <my-button part="bar">Bar</my-button>
+        <app-router></app-router>
         <hr>
         <h2>State</h2>
         <my-counter></my-counter>
@@ -52,4 +74,5 @@ export default class AppRoot extends WebComponent {
   }
 }
 
+customElements.define('app-router', AppRouter);
 customElements.define('app-root', AppRoot);

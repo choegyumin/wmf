@@ -30,3 +30,8 @@ export type EffectDeps = unknown[];
 export type CleanupCallback = (component: HookComponent) => void;
 
 export type SetState<S> = (state: S | ((prevState: S) => S)) => void;
+
+export type Route = {
+  path: string | RegExp;
+  html: string;
+};
