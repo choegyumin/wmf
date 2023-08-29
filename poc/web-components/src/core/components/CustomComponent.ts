@@ -1,7 +1,7 @@
 import CustomElement from './CustomElement.js';
-import { attributeToProperty, propertyToAttribute } from './PropertyConverter.js';
-import type { Properties, PropertiesType } from './types.js';
-import { updateChildNodes } from '../utils/index.js';
+import type { Properties, PropertiesType } from '../internals/properties.js';
+import { attributeToProperty, propertyToAttribute } from '../internals/properties.js';
+import { updateChildNodes } from '../../utils/index.js';
 
 const propertyGetter: (...args: Parameters<typeof Reflect.get>) => unknown = Reflect.get;
 const propertySetter: (...args: Parameters<typeof Reflect.set>) => boolean = Reflect.set;

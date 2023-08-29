@@ -1,22 +1,8 @@
-import type { FromAttribute, ToAttribute } from './types';
-
-export const attributeToProperty = <T = unknown>(
-  value: string | null,
-  converter: FromAttribute<T>,
-): T | string | null => {
-  if (typeof converter === 'function') return converter(value);
-  return value;
-};
-
-export const propertyToAttribute = <T = unknown>(value: T, converter: ToAttribute<T>): string | null => {
-  if (typeof converter === 'function') return converter(value);
-  if (value == null) return null;
-  return String(value);
-};
+import { FromAttribute, ToAttribute } from './internals/properties.js';
 
 const define = <T>(from: FromAttribute<T>, to: ToAttribute<T>) => ({ from, to });
 
-const PropertyConverter = {
+export const PropertyConverter = {
   define,
   string: define(
     (attribute) => attribute,
@@ -40,4 +26,6 @@ const PropertyConverter = {
   ),
 };
 
-export default PropertyConverter;
+// Alias for IDE auto-completion
+const P = PropertyConverter;
+export default P;
