@@ -1,0 +1,34 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# config files
+.*ignore
+
+# dependencies
+node_modules
+*.lock
+.pnp.*js
+package.json
+package-lock.json
+.yarnrc.yml
+.yarn
+pnpm-lock.yml
+pnpm-lock.yaml
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# build files
+build
+dist
+out
+
+# testing
+coverage
+
+# editor
+.vscode

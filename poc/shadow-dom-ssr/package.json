@@ -1,0 +1,19 @@
+{
+  "name": "@wmf/poc-shadow-dom-ssr",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "concurrently --kill-others -n COMPILE,SERVER  \"npm run build:watch\" \"npm run start\"",
+    "build": "rimraf ./dist && tsc",
+    "build:watch": "rimraf ./dist && tsc --watch",
+    "start": "http-server ./",
+    "format": "prettier --write \"**/*.{ts,js,html,css}\""
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "*",
+    "http-server": "*",
+    "prettier": "*",
+    "rimraf": "*",
+    "typescript": "*"
+  }
+}
