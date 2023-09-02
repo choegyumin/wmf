@@ -1,19 +1,22 @@
 {
   "name": "@wmf/poc-shadow-dom-ssr",
   "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently --kill-others -n COMPILE,SERVER  \"npm run build:watch\" \"npm run start\"",
+    "dev": "rimraf ./dist && tsc-watch --onSuccess \"nodemon --delay 0.25 --watch ./dist/ --exec 'node --experimental-modules' ./dist/server.js\"",
     "build": "rimraf ./dist && tsc",
-    "build:watch": "rimraf ./dist && tsc --watch",
-    "start": "http-server ./",
+    "start": "node ./dist/server.js",
     "format": "prettier --write \"**/*.{ts,js,html,css}\""
   },
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "*",
-    "http-server": "*",
+    "@types/express": "*",
+    "@types/node": "*",
+    "express": "*",
+    "nodemon": "*",
     "prettier": "*",
     "rimraf": "*",
+    "tsc-watch": "*",
     "typescript": "*"
   }
 }
